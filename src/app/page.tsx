@@ -2,14 +2,16 @@
 import Form from "next/form";
 import UserLogin from "@/components/UserLogin";
 import PassLogin from "@/components/PassLogin";
-import Load from "../components/loading";
+import Load from "../components/Load";
 import { useCallback, useState } from "react";
 import axios, { AxiosError } from "axios";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { LockKeyOpen } from "@phosphor-icons/react";
 
 export default function Page() {
     const [isLoading, setIsLoading] = useState(false);
-    // const router = useRouter();
+    const router = useRouter();
+    const [showLoginSucces, setShowLoginSucces] = useState(false);  
 
     const authUser = useCallback(async (formData: FormData) => {
         return await axios.post("/api/signin", {
@@ -19,14 +21,11 @@ export default function Page() {
             if(response.status === 200){
                 const localStorage = window.localStorage;
 
-                localStorage.setItem('session_user_name', response.data.data.name);
-                localStorage.setItem('session_user_hak_Akses', response.data.data.role);
+                localStorage.setItem('session_user_name', response.data.data.username);
+                localStorage.setItem('session_user_hakAkses', response.data.data.hakAkses);
 
-                alert("Login berhasil");
-
-                // response.data.data.hak_akses
-
-                // response.data.data.hak_akses === "Admin" ? router.push("/dashboard") : router.push("/transaksi");
+                // setShowLoginSucces(true);
+                router.push(response.data.hakAkses === "Admin" ? "/dashboard" : "/transaksi");
             }
         }).catch((error: AxiosError) => {
             const { message } = error.response?.data as { message: string };
@@ -63,9 +62,23 @@ export default function Page() {
         </Form>
       </div>
 
-      <div className="absolute text-center text-xs font-light bottom-0 ">
-        <span>© Copyright Muhammad Azka 2025. All rights reserved.</span>
-      </div>
+      {showLoginSucces && (
+          <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
+              <div className="w-24 h-24 bg-blue-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
+                <LockKeyOpen size={48} color="white"/>
+              </div>
+              <h1 className="font-bold text-2xl text-blue-500 mt-3">Berhasil</h1>
+              <p className="text-zinc-600 leading-6 mt-3">Anda Berhasil Masuk</p>
+              <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowLoginSucces(false)}>
+                Oke
+              </button>
+            </div>
+          </div>
+          </>
+        )}
+
     </div>
   );
 }

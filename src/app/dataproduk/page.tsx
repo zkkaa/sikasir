@@ -36,6 +36,8 @@ const DataProdukPage = () => {
   });
   const [previewImage, setPreviewImage] = useState<string>("");
   const [price, setPrice] = useState("");
+
+  // GET
   const fetchProduk = async()=> {
     const response = await fetch("/api/produk", {
       method: "GET", 

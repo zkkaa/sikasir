@@ -1,6 +1,5 @@
-import { User } from "../../../db/query";  // Mengimpor dari query yang sesuai dengan tabel User
+import { User } from "../../../db/query"; 
 import { NextRequest, NextResponse } from "next/server";
-import argon2 from "argon2";
 import { Token } from "../../../lib/jwt"
 
 interface RequestBody {
@@ -30,16 +29,6 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // const verified_password = await argon2.verify(user[0].password!, body.password);  // Verifikasi password
-
-        // if (!verified_password) {
-        //     return NextResponse.json({
-        //         message: "Password salah"
-        //     }, {
-        //         status: 401
-        //     });
-        // }
-
         const { password, ...dataUser } = user[0];  // Menghapus password dari data pengguna
         console.log(password)
         const token = Token.generate(dataUser);  // Menghasilkan token JWT
@@ -47,8 +36,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             message: "Login berhasil",
             data: {
-                name: dataUser.nama,  // Menyesuaikan dengan kolom `nama` pada tabel User
-                hak_Akases: dataUser.hakAkses,  // Menyesuaikan dengan kolom `hak_akses` pada tabel User
+                name: dataUser.nama,  // Menyesuaikan dengan kolom `username` pada tabel User
+                hakAkses: dataUser.hakAkses,  // Menyesuaikan dengan kolom `hak_akses` pada tabel User
             }
         }, {
             status: 200,

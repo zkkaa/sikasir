@@ -162,7 +162,6 @@ const PaymentPage = () => {
               </div>
             )}
             <h2 className="text-lg font-semibold mt-4">Total Bayar</h2>
-            {/* <p className="text-gray-600 mb-2">Total Harga: <span className="font-bold">Rp {totalPrice.toLocaleString()}</span></p> */}
             <input type="number" className="w-full p-2 border rounded mb-2" placeholder="Masukkan jumlah uang" onChange={(e) => setAmountPaid(Number(e.target.value))} />
             <p className="text-gray-600 mb-4">Kembalian: <span className="font-bold">Rp {(amountPaid - totalPrice).toLocaleString()}</span></p>
             <button className="bg-green-500 text-white px-4 py-2 rounded-lg w-full hover:bg-green-600">
@@ -182,11 +181,11 @@ const PaymentPage = () => {
               <Users size={48} className="mx-auto text-blue-400 mb-5" />
               <div>
                 <label>Nama Pelanggan</label>
-                <input className="w-full p-2 border border-gray-300 rounded outline-none" type="text" />
+                <input className="w-full p-2 border border-stone-400 rounded outline-none" type="text" />
               </div>             
               <div>
                 <label>Alamat</label>
-                <textarea className="w-full p-2 border border-gray-300 rounded outline-none" name="" id=""></textarea>
+                <textarea className="w-full p-2 border border-stone-400 rounded outline-none" name="" id=""></textarea>
               </div>             
               <div>
                 <label>No Telp</label>
