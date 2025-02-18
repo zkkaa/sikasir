@@ -7,7 +7,7 @@ export default function PassLogin() {
 
   return (
     <div className="form-control">
-      <input type={show ? "text" : "password"} required />
+      <input type={show ? "text" : "password"} name="password" id="password" required/>
       <label>
         <span className="span" style={{ transitionDelay: "0ms" }}>P</span>
         <span className="span" style={{ transitionDelay: "50ms" }}>a</span>

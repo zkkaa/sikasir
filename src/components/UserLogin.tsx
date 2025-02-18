@@ -4,7 +4,7 @@
 export default function UserLogin() {
   return (
     <div className="form-control">
-      <input type="value" required />
+      <input type="value" name="username" id="username" required />
       <label>
         <span className="span" style={{ transitionDelay: "0ms" }}>U</span>
         <span className="span" style={{ transitionDelay: "50ms" }}>s</span>
