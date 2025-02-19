@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { MagnifyingGlass, FileArrowDown } from "@phosphor-icons/react";
+import { MagnifyingGlass, FileArrowDown, CaretDoubleRight, CaretDoubleLeft } from "@phosphor-icons/react";
 import jsPDF from "jspdf";
 import 'jspdf-autotable';
 
@@ -27,6 +27,8 @@ const DataPelangganPage = () => {
   const [showAddPelangganForm, setShowAddCustomerForm] = useState(false);
   const [showEditPelanggan, setShowEditPelanggan] =
     useState<Customer | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 9;
 
   const fetchCustomers = async () => { 
     const response = await fetch("/api/pelanggan", { 
@@ -136,6 +138,25 @@ const DataPelangganPage = () => {
     doc.save("data_pelanggan.pdf");
   };
 
+  // Calculate the current customers to display based on pagination
+  const indexOfLastCustomer = currentPage * customersPerPage;
+  const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
+  const currentCustomers = filteredCustomers.slice(indexOfFirstCustomer, indexOfLastCustomer);
+
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <>
       <Sidebar />
@@ -168,7 +189,7 @@ const DataPelangganPage = () => {
         </div>
 
         {/* Tabel Data Pelanggan */}
-        <div className="bg-white p-6 rounded-lg shadow-lg overflow-x-auto">
+        <div className="bg-white rounded-lg shadow-lg flex-grow">
           {/* Tombol Export & Cetak (Muncul Jika Ada yang Dipilih) */}
           {selectedRows.length > 0 && (
             <div className="flex justify-end gap-2 mb-4">
@@ -180,7 +201,7 @@ const DataPelangganPage = () => {
 
           {/* Tabel Pelanggan */}
           <table className="w-full border-collapse border" onDoubleClick={handleTableDoubleClick}>
-            <thead>
+            <thead className="sticky -top-[1px] bg-gray-200">
               <tr className="bg-gray-200">
                 {showCheckboxes && (
                   <th className="border p-2 text-center">
@@ -195,7 +216,7 @@ const DataPelangganPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.map(customer => (
+              {currentCustomers.map(customer => (
                 <tr key={customer.id}>
                   {showCheckboxes && (
                     <td className="border p-2 text-center">
@@ -222,6 +243,25 @@ const DataPelangganPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center gap-4 -mt-2">
+          <button
+            className="px-3 py-1 rounded-lg"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            <CaretDoubleLeft size={24} />
+          </button>
+          <span className="px-4 py-2">{currentPage} dari {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded-lg"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            <CaretDoubleRight size={24} />
+          </button>
         </div>
       </div>
 

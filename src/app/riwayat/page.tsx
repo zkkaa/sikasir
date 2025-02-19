@@ -1,81 +1,57 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { Clock, MagnifyingGlass, WarningCircle, FileArrowDown, Printer } from "@phosphor-icons/react";
+import { Clock, MagnifyingGlass, FileArrowDown } from "@phosphor-icons/react";
 import jsPDF from "jspdf";
 import 'jspdf-autotable';
 
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: { head: string[][]; body: (string | number)[][] }) => jsPDF;
-  }
-}
-
 // Struktur data transaksi
 interface Transaction {
-  id: string;
-  date: string;
-  buyer: string;
-  items: { name: string; quantity: number; price: number }[];
-  cashier?: string;
-  total: number;
+  id: number;
+  waktuTransaksi: string;
+  pelangganNama: string;
+  items: { namaProduk: string; qty: number; hargaProduk: number }[];
+  totalHarga: number;
 }
 
 const RiwayatTransaksiPage = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: "TRX001",
-      date: "2025-02-10 14:30",
-      buyer: "Azka",
-      items: [
-        { name: "Ayam Geprek", quantity: 2, price: 15000 },
-        { name: "Es Teh Manis", quantity: 1, price: 5000 },
-      ],
-      cashier: "Admin",
-      total: 35000,
-    },
-    {
-      id: "TRX002",
-      date: "2025-02-11 10:00",
-      buyer: "Budi",
-      items: [{ name: "Nasi Goreng", quantity: 1, price: 20000 }],
-      total: 20000,
-    },
-  ]);
-
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [sortOrder, setSortOrder] = useState("latest");
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<Transaction | null>(null);
-  const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(
-    null
-  );
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  const fetchTransactions = async () => {
+    const response = await fetch("/api/transaksi", {
+      method: "GET",
+    });
+    const data = await response.json();
+    setTransactions(data.data || []);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   // Fungsi untuk mencari dan mengurutkan transaksi berdasarkan ID atau Nama Pembeli
   const filteredTransactions = transactions
     .filter(
       (trans) =>
         (searchTerm === "" ||
-          trans.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          trans.buyer.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (filterDate === "" || trans.date.includes(filterDate))
+          trans.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+          trans.pelangganNama.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (filterDate === "" || trans.waktuTransaksi.includes(filterDate)) &&
+        new Date(trans.waktuTransaksi).toDateString() === new Date().toDateString() // Filter transaksi hari ini
     )
     .sort((a, b) =>
       sortOrder === "latest"
-        ? new Date(b.date).getTime() - new Date(a.date).getTime()
-        : new Date(a.date).getTime() - new Date(b.date).getTime()
+        ? new Date(b.waktuTransaksi).getTime() - new Date(a.waktuTransaksi).getTime()
+        : new Date(a.waktuTransaksi).getTime() - new Date(b.waktuTransaksi).getTime()
     );
 
-  // Fungsi menghapus transaksi
-  const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((trans) => trans.id !== id));
-    setShowConfirmDelete(null);
-  };
-
   const [showCheckboxes, setShowCheckboxes] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
   // Klik dua kali untuk menampilkan checkbox
@@ -84,7 +60,7 @@ const RiwayatTransaksiPage = () => {
   };
 
   // Menangani pemilihan satu checkbox
-  const handleCheckboxChange = (id: string) => {
+  const handleCheckboxChange = (id: number) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
     );
@@ -107,7 +83,7 @@ const RiwayatTransaksiPage = () => {
 
     const tableData = selectedRows.map((id) => {
       const trans = filteredTransactions.find(t => t.id === id);
-      return [trans?.id || "", trans?.date || "", trans?.buyer || "", `Rp ${trans?.total?.toLocaleString() || 0}`];
+      return [trans?.id || "", trans?.waktuTransaksi || "", trans?.pelangganNama || "", `Rp ${trans?.totalHarga?.toLocaleString() || 0}`];
     });
 
     doc.autoTable({
@@ -116,6 +92,17 @@ const RiwayatTransaksiPage = () => {
     });
 
     doc.save("laporan_transaksi.pdf");
+  };
+
+  // Format date and time
+  const formatDateTime = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
+
+  // Fungsi untuk print detail transaksi
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -162,7 +149,7 @@ const RiwayatTransaksiPage = () => {
         </div>
 
         {/* Tabel Riwayat Transaksi */}
-        <div className="bg-white p-6 rounded-lg shadow-lg overflow-x-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
           {/* Tombol Export & Cetak (Muncul Jika Ada yang Dipilih) */}
           {selectedRows.length > 0 && (
             <div className="flex justify-end gap-2 mb-4">
@@ -172,18 +159,13 @@ const RiwayatTransaksiPage = () => {
               >
                 <FileArrowDown size={20} /> Export PDF
               </button>
-              <button 
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
-              >
-                <Printer size={20} /> Cetak
-              </button>
             </div>
           )}
 
           {/* Tabel Transaksi */}
           <table className="w-full border-collapse border" onDoubleClick={handleTableDoubleClick}>
-            <thead>
-              <tr className="bg-gray-200">
+            <thead className="sticky -top-[1px] bg-gray-200">
+              <tr>
                 {showCheckboxes && (
                   <th className="border p-2 text-center">
                     <input type="checkbox" checked={selectAll} onChange={handleSelectAll} />
@@ -209,21 +191,15 @@ const RiwayatTransaksiPage = () => {
                     </td>
                   )}
                   <td className="border p-2">{trans.id}</td>
-                  <td className="border p-2">{trans.date}</td>
-                  <td className="border p-2">{trans.buyer}</td>
-                  <td className="border p-2">Rp {trans.total.toLocaleString()}</td>
+                  <td className="border p-2">{formatDateTime(trans.waktuTransaksi)}</td>
+                  <td className="border p-2">{trans.pelangganNama}</td>
+                  <td className="border p-2">Rp {trans.totalHarga?.toLocaleString()}</td>
                   <td className="border p-2 flex gap-2 justify-center ">
                     <button 
                       className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600" 
                       onClick={() => setSelectedTransaction(trans)}
                     >
                       Detail
-                    </button>
-                    <button 
-                      className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600" 
-                      onClick={() => setShowConfirmDelete(trans.id)}
-                    >
-                      Hapus
                     </button>
                   </td>
                 </tr>
@@ -236,72 +212,48 @@ const RiwayatTransaksiPage = () => {
       {/* Popup Detail Transaksi */}
       {selectedTransaction && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Detail Transaksi</h2>
-            <p>ID: {selectedTransaction.id}</p>
-            <p>Nama Pembeli: {selectedTransaction.buyer}</p>
-            <p>Tanggal: {selectedTransaction.date}</p>
-            <ul>
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] flex flex-col gap-4 print:w-full print:p-0 print:shadow-none">
+            <h2 className="text-xl font-bold text-center">Detail Transaksi</h2>
+            <div className="border-b pb-2">
+              <h3 className="font-semibold">Pesanan:</h3>
               {selectedTransaction.items.map((item, index) => (
-                <li key={index}>
-                  {item.name} - {item.quantity} x Rp{" "}
-                  {item.price.toLocaleString()}
-                </li>
+                <div key={index} className="flex justify-between">
+                  <span>{item.namaProduk} x{item.qty}</span>
+                  <span>Rp {item.hargaProduk.toLocaleString()}</span>
+                </div>
               ))}
-            </ul>
-            <p className="font-bold">
-              Total: Rp {selectedTransaction.total.toLocaleString()}
-            </p>
-            <div className="flex justify-center gap-4 mt-8">
-            <button
-                className="px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm"
-                // onClick={true}
-              >
-                Hapus
-              </button>
-              <button
-                className="px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm"
-                onClick={() => setSelectedTransaction(null)}
-              >
-                Print
-              </button>
+            </div>
+            <div className="border-b pb-2">
+              <div className="flex justify-between font-semibold">
+                <span>Total Harga:</span>
+                <span>Rp {selectedTransaction.totalHarga?.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Uang Dibayar:</span>
+                <span>Rp {selectedTransaction.totalHarga?.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Kembalian:</span>
+                <span>Rp {(selectedTransaction.totalHarga - selectedTransaction.totalHarga)?.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tanggal Transaksi:</span>
+                <span>{formatDateTime(selectedTransaction.waktuTransaksi)}</span>
+              </div>
+            </div>
+            <div className="border-b pb-2">
+              <h3 className="font-semibold">Pelanggan:</h3>
+              <div>
+                <p>Nama: {selectedTransaction.pelangganNama}</p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-4 mt-4 print:hidden">
+              <button className="px-4 py-2 bg-gray-300 rounded-lg" onClick={() => setSelectedTransaction(null)}>Kembali</button>
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg" onClick={handlePrint}>Print</button>
             </div>
           </div>
         </div>
       )}
-
-      {showConfirmDelete && (
-        <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <WarningCircle size={48} color="white" />
-              </div>
-              <h1 className="font-bold text-2xl text-red-500 mt-3">Hapus?</h1>
-              <p className="text-zinc-600 leading-6 mt-3">
-                Apakah Anda yakin ingin menghapus transaksi ini?
-              </p>
-              <div className="flex justify-center gap-4 mt-8">
-                <button
-                  className="px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm"
-                  onClick={() => setShowConfirmDelete(null)}
-                >
-                  Batal
-                </button>
-                <button
-                  className="px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm"
-                  onClick={() => deleteTransaction(showConfirmDelete)}
-                >
-                  Hapus
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Menyembunyikan sidebar saat popup tampil */}
-          <Sidebar />
-        </>
-      )}
-
     </>
   );
 };

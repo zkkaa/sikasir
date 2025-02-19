@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { Users, PlusCircle, MagnifyingGlass, WarningCircle } from "@phosphor-icons/react";
+import { Users, MagnifyingGlass, WarningCircle, CaretDoubleLeft, CaretDoubleRight } from "@phosphor-icons/react";
 import Image from "next/image";
 
 // Struktur data akun
@@ -22,6 +22,8 @@ const KelolaAkunPage = () => {
   const [editUser, setEditUser] = useState<UserAccount>({ id: 0, nama: "", username: "", hakAkses: "Petugas", password: "", });
   const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 5;
 
   useEffect(() => {
     fetchUsers();
@@ -32,7 +34,7 @@ const KelolaAkunPage = () => {
       const response = await fetch("/api/users");
       const data = await response.json();
       if (data.success) {
-        setUsers(data.data);
+        setUsers(data.data.sort((a: UserAccount, b: UserAccount) => b.id - a.id));
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -108,6 +110,25 @@ const KelolaAkunPage = () => {
     )
     .filter(user => filterhakAkses === "All" || user.hakAkses === filterhakAkses);
 
+  // Calculate the current users to display based on pagination
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUser.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(filteredUser.length / usersPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <>
       <Sidebar />
@@ -131,15 +152,15 @@ const KelolaAkunPage = () => {
             className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
             onClick={() => { setShowAddForm(true); setEditUser({ id: 0, nama: "", username: "", hakAkses: "Petugas", password: "", }); }}
           >
-            <PlusCircle size={20} /> Tambah Akun
+           Tambah Akun
           </button>
         </div>
         
         {/* Data Pengguna */}
-        <div className="bg-white p-6 rounded-lg shadow-lg grid grid-cols-1 gap-3">
-          {filteredUser.map(user => (
+        <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col gap-2">
+          {currentUsers.map(user => (
             <div key={user.id} className="bg-gray-100 p-4 rounded-lg shadow-md flex items-center gap-4 col-span-1">
-              <Image src="/userprofile.jpg" width={500} height={500} alt="souldout" className='w-14 h-14 rounded-full border'/>
+              <Image src="/userprofile.jpg" width={500} height={500} alt="souldout" className='w-12 h-12 rounded-full border'/>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold">{user.nama}</h3>
                 <p className="text-gray-500">{user.hakAkses}</p>
@@ -154,6 +175,25 @@ const KelolaAkunPage = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center gap-4 -mt-4">
+          <button
+            className="px-3 py-1 rounded-lg"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            <CaretDoubleLeft size={24} />
+          </button>
+          <span className="px-4 py-2">{currentPage} dari {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded-lg"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            <CaretDoubleRight size={24} />
+          </button>
         </div>
         
       {showAddForm && (

@@ -135,6 +135,7 @@ const DataProdukPage = () => {
         setNewProduct({ id: 0, nama: "", kategori: "Makanan", stok: 0, harga: 0, gambar: "" });
         setPreviewImage("");
         setPrice("");
+        fetchProduk(); 
       } else {
         alert("Gagal menambahkan produk!");
       }
@@ -169,6 +170,7 @@ const EditProduct = async (id: number) => {
     setShowEditSucces(true);
     setShowEditForm(false);
     fetchProduk(); // Refresh daftar produk
+    setPrice("");
   } catch (error) {
     console.error("Error saat memperbarui produk:", error);
     alert("Terjadi kesalahan, coba lagi.");

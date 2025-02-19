@@ -227,6 +227,11 @@ const TransaksiPage = () => {
     setChange(0);
   };
 
+  // Handle print
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <>
       <Sidebar />
@@ -258,7 +263,7 @@ const TransaksiPage = () => {
                 />
               </div>
             </div>
-            <div className="max-h-[540px] overflow-y-auto overflow-x-hidden">
+            <div className="max-h-[485px] overflow-y-auto overflow-x-hidden">
               <div className="grid grid-cols-3 gap-6">
                 {filteredMenu.map((product) => (
                   <div key={product.id} className={`relative border col-span-1 rounded-lg shadow-lg transform transition duration-300 cursor-pointer ${product.stok > 0 ? "" : "opacity-50 cursor-not-allowed"}`} onClick={() => product.stok > 0 && addToOrder(product)}>
@@ -389,20 +394,8 @@ const TransaksiPage = () => {
       {/* Popup Detail Transaksi */}
       {showDetail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] flex flex-col gap-4">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] flex flex-col gap-4 print:w-full print:p-0 print:shadow-none">
             <h2 className="text-xl font-bold text-center">Detail Transaksi</h2>
-            <div className="border-b pb-2">
-              <h3 className="font-semibold">Pelanggan:</h3>
-              {selectedCustomer ? (
-                <div>
-                  <p>Nama: {selectedCustomer.nama}</p>
-                  <p>Telepon: {selectedCustomer.noHp}</p>
-                  <p>Alamat: {selectedCustomer.alamat}</p>
-                </div>
-              ) : (
-                <p>-</p>
-              )}
-            </div>
             <div className="border-b pb-2">
               <h3 className="font-semibold">Pesanan:</h3>
               {orders.map(order => (
@@ -430,8 +423,21 @@ const TransaksiPage = () => {
                 <span>{transactionDate}</span>
               </div>
             </div>
+            <div className="border-b pb-2">
+              <h3 className="font-semibold">Pelanggan:</h3>
+              {selectedCustomer ? (
+                <div>
+                  <p>Nama: {selectedCustomer.nama}</p>
+                  <p>Telepon: {selectedCustomer.noHp}</p>
+                  <p>Alamat: {selectedCustomer.alamat}</p>
+                </div>
+              ) : (
+                <p>-</p>
+              )}
+            </div>
             <div className="flex justify-center gap-4 mt-4">
-              <button className="px-4 py-2 bg-gray-300 rounded-lg" onClick={handleSelesai}>Selesai</button>
+              <button className="px-4 py-2 bg-gray-300 rounded-lg print:hidden" onClick={handleSelesai}>Selesai</button>
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg print:hidden" onClick={handlePrint}>Print</button>
             </div>
           </div>
         </div>
@@ -488,8 +494,8 @@ const TransaksiPage = () => {
               <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
                 <WarningCircle size={48} color="white"/>
               </div>
-              <h1 className="font-bold text-2xl text-red-500 mt-3">Berhasil</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Produk berhasil ditambahkan</p>
+              <h1 className="font-bold text-2xl text-red-500 mt-3">Gagal!</h1>
+              <p className="text-zinc-600 leading-6 mt-3">Transaksi gagal</p>
               <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowSucces(false)}>
                 Oke
               </button>
