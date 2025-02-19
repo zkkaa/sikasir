@@ -10,7 +10,7 @@ const menuItems = [
   { title: "Transaksi", icon: <HandCoins size={24} />, path: "/transaksi" },
   { title: "Data Produk", icon: <Package size={24} />, path: "/dataproduk" },
   { title: "Riwayat", icon: <ClockCounterClockwise size={24} />, path: "/riwayat" },
-  { title: "Laporan", icon: <ClockCounterClockwise size={24} />, path: "/laporan" },
+  { title: "Data Pelanggan", icon: <ClockCounterClockwise size={24} />, path: "/datapelanggan" },
   { title: "Kelola Pengguna", icon: <Users size={24} />, path: "/akun" }
 ];
 

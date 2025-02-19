@@ -1,17 +1,107 @@
+"use server";
+
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../db";
-import { produk } from "../../../db/schema";
-import { authMiddleware } from "../../../middleware/authMiddleware";
+import { db } from "@/db";
+import { transaksi, detailTransaksi, produk, pelanggan } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
-// **GET: Ambil Semua Produk**
-export async function GET(req: NextRequest) {
-  const user = authMiddleware(req);
-  if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+type ItemType = {
+  produkId: number;
+  qty: number;
+  subtotal: number;
+};
 
+export async function POST(req: NextRequest) {
   try {
-    const data = await db.select().from(produk).execute();
-    return NextResponse.json({ success: true, data });
+    const { pelangganId, kasirId, totalHarga, uangDibayar, kembalian, items } = await req.json();
+
+    if (!pelangganId || !kasirId || !totalHarga || !uangDibayar || !kembalian || !items || items.length === 0) {
+      return NextResponse.json({ error: "Semua data harus diisi!" }, { status: 400 });
+    }
+
+    // Validate produk_id in items
+    for (const item of items) {
+      const product = await db.select().from(produk).where(eq(produk.id, item.produkId)).execute();
+      if (product.length === 0) {
+        return NextResponse.json({ error: `Produk dengan ID ${item.produkId} tidak ditemukan` }, { status: 404 });
+      }
+    }
+
+    // Insert transaksi baru
+    const [newTransaction] = await db.insert(transaksi).values({
+      pelangganId,
+      kasirId,
+      totalHarga,
+      uangDibayar,
+      kembalian,
+    }).returning();
+
+    // Insert detail transaksi
+    await db.insert(detailTransaksi).values(
+      items.map((item: ItemType) => ({
+        transaksiId: newTransaction.id,
+        produkId: item.produkId,
+        qty: item.qty,
+        subtotal: item.subtotal,
+      }))
+    );
+
+    // Update stok produk
+    for (const item of items) {
+      const currentStock = await db.select({ stok: produk.stok }).from(produk).where(eq(produk.id, item.produkId)).execute();
+      await db.update(produk)
+        .set({ stok: currentStock[0].stok - item.qty })
+        .where(eq(produk.id, item.produkId));
+    }
+
+    return NextResponse.json({ message: "Transaksi berhasil ditambahkan!" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error }, { status: 500 });
+    console.error("Error in POST /api/transaksi:", error);
+    return NextResponse.json({ error: "Terjadi kesalahan pada server", details: error }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    // Ambil semua transaksi
+    const transaksiData = await db
+      .select({
+        id: transaksi.id,
+        pelangganNama: pelanggan.nama,
+        kasirId: transaksi.kasirId,
+        totalHarga: transaksi.totalHarga,
+        uangDibayar: transaksi.uangDibayar,
+        kembalian: transaksi.kembalian,
+        waktuTransaksi: transaksi.waktuTransaksi,
+      })
+      .from(transaksi)
+      .leftJoin(pelanggan, eq(transaksi.pelangganId, pelanggan.id))
+      .orderBy(desc(transaksi.id))
+      .execute();
+
+    // Ambil detail transaksi
+    const detailData = await db
+      .select({
+        transaksiId: detailTransaksi.transaksiId,
+        produkId: detailTransaksi.produkId,
+        qty: detailTransaksi.qty,
+        subtotal: detailTransaksi.subtotal,
+        namaProduk: produk.nama,
+        hargaProduk: produk.harga,
+      })
+      .from(detailTransaksi)
+      .innerJoin(produk, eq(detailTransaksi.produkId, produk.id))
+      .execute();
+
+    // Gabungkan transaksi dengan detail transaksi
+    const result = transaksiData.map((trx) => ({
+      ...trx,
+      items: detailData.filter((detail) => detail.transaksiId === trx.id),
+    }));
+
+    return NextResponse.json({ message: "success", data: result });
+  } catch (error) {
+    console.error("Error in GET /api/transaksi:", error);
+    return NextResponse.json({ error: "Terjadi kesalahan pada server", details: error }, { status: 500 });
   }
 }

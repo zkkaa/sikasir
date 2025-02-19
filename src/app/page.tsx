@@ -25,13 +25,13 @@ export default function Page() {
                 localStorage.setItem('session_user_hakAkses', response.data.data.hakAkses);
 
                 // setShowLoginSucces(true);
-                router.push(response.data.hakAkses === "Admin" ? "/dashboard" : "/transaksi");
+                router.push(response.data.data.hakAkses === "Admin" ? "/dashboard" : "/transaksi");
             }
         }).catch((error: AxiosError) => {
             const { message } = error.response?.data as { message: string };
             alert(message);
         }).finally(() => setIsLoading(false));
-    }, []);
+    }, [router]);
 
     const signInHandler = (formData: FormData) => {setIsLoading(true); authUser(formData)};
 

@@ -4,7 +4,13 @@ import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
 import { Clock, MagnifyingGlass, WarningCircle, FileArrowDown, Printer } from "@phosphor-icons/react";
 import jsPDF from "jspdf";
-import 'jspdf-autotable'
+import 'jspdf-autotable';
+
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: { head: string[][]; body: (string | number)[][] }) => jsPDF;
+  }
+}
 
 // Struktur data transaksi
 interface Transaction {
@@ -101,7 +107,7 @@ const RiwayatTransaksiPage = () => {
 
     const tableData = selectedRows.map((id) => {
       const trans = filteredTransactions.find(t => t.id === id);
-      return [trans?.id, trans?.date, trans?.buyer, `Rp ${trans?.total.toLocaleString()}`];
+      return [trans?.id || "", trans?.date || "", trans?.buyer || "", `Rp ${trans?.total?.toLocaleString() || 0}`];
     });
 
     doc.autoTable({
@@ -187,7 +193,7 @@ const RiwayatTransaksiPage = () => {
                 <th className="border p-2">Tanggal & Waktu</th>
                 <th className="border p-2">Nama Pembeli</th>
                 <th className="border p-2">Total Harga</th>
-                <th className="border p-2">Aksi</th>
+                <th className="border p-2 w-48">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -206,7 +212,7 @@ const RiwayatTransaksiPage = () => {
                   <td className="border p-2">{trans.date}</td>
                   <td className="border p-2">{trans.buyer}</td>
                   <td className="border p-2">Rp {trans.total.toLocaleString()}</td>
-                  <td className="border p-2 flex gap-2">
+                  <td className="border p-2 flex gap-2 justify-center ">
                     <button 
                       className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600" 
                       onClick={() => setSelectedTransaction(trans)}

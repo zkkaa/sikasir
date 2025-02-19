@@ -62,7 +62,7 @@ const DataProdukPage = () => {
         console.error("Error:", error);
         alert("Terjadi kesalahan saat menghapus produk");
     }
-};
+  };
 
   // Fungsi untuk menghapus produk
   const DeleteProduct = (id: number) => {
@@ -81,16 +81,13 @@ const DataProdukPage = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      const imageUrl = URL.createObjectURL(file);
+      setPreviewImage(imageUrl);
   
-      if (file) {
-        const imageUrl = URL.createObjectURL(file);
-        setPreviewImage(imageUrl);
-  
-        if (showEditForm && selectedProduct) {
-          setSelectedProduct({ ...selectedProduct, gambar: file });
-        } else {
-          setNewProduct({ ...newProduct, gambar: file });
-        }
+      if (showEditForm && selectedProduct) {
+        setSelectedProduct({ ...selectedProduct, gambar: file });
+      } else {
+        setNewProduct({ ...newProduct, gambar: file });
       }
     }
   };
@@ -98,11 +95,16 @@ const DataProdukPage = () => {
   // Handle Harga
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, ""); // Hanya angka
-    const formatted = currency(rawValue, { separator: ".", precision: 0, symbol: "Rp. " }).format(); // Format ke Rp
+    const formatted = currency(rawValue, { separator: ".", precision: 0, symbol: "Rp. " }).format();
   
     setPrice(formatted); // Simpan format Rp di input
-    setNewProduct({ ...newProduct, harga: parseInt(rawValue) || 0 }); // Update state produk
+    if (showEditForm && selectedProduct) {
+      setSelectedProduct({ ...selectedProduct, harga: parseInt(rawValue) || 0 }); // Simpan angka asli ke state
+    } else {
+      setNewProduct({ ...newProduct, harga: parseInt(rawValue) || 0 });
+    }
   };
+  
 
   // Fecch pertama kali produk diload
   useEffect(() => {
@@ -156,7 +158,6 @@ const EditProduct = async (id: number) => {
         kategori: selectedProduct.kategori,
         stok: selectedProduct.stok,
         harga: selectedProduct.harga,
-        gambar: typeof selectedProduct.gambar === "string" ? selectedProduct.gambar : undefined, // Kirim URL jika bukan File
       }),
     });
 
@@ -177,7 +178,6 @@ const EditProduct = async (id: number) => {
 // Handle EditClick
   const handleEditClick = (product: Product) => {
     setSelectedProduct(product); // Simpan produk yang akan diedit
-    setPreviewImage(typeof product.gambar === "string" ? product.gambar : "");
     setPrice(currency(product.harga, { separator: ".", precision: 0, symbol: "Rp. " }).format()); // Format harga
     setShowEditForm(true); // Tampilkan form edit
   };
@@ -341,16 +341,9 @@ const EditProduct = async (id: number) => {
                 <label>Harga</label>
                 <input className="w-full p-2 border rounded" type="text" value={price} onChange={handlePriceChange} />
               </div>             
-              <div>
-                <label>Foto Produk</label>
-                <label className="flex flex-col items-center cursor-pointer">
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                  {previewImage ? <Image src={previewImage || "/placeholder.png"} alt="Preview" width={500} height={500} className="w-32 h-32 rounded-full border" /> : <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center">Pilih Gambar</div>}
-                </label>
-              </div>
-              <div className="flex justify-center gap-4 mt-8 mx-auto">
-                <button className="w-32 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowEditForm(false)}>Batal</button>
-                <button className="w-32 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => EditProduct(selectedProduct.id)}>Tambahkan</button>
+              <div className="flex justify-center gap-4 mt-8 w-full">
+                <button className="w-1/2 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowEditForm(false)}>Batal</button>
+                <button className="w-1/2 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => EditProduct(selectedProduct.id)}>Tambahkan</button>
               </div>
             </div>
           </div>
@@ -393,8 +386,6 @@ const EditProduct = async (id: number) => {
           <Sidebar />
           </>
         )}
-
-
       </div>
     </>
   );
