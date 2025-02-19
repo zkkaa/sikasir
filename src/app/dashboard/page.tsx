@@ -67,8 +67,8 @@ const Utama = () => {
           .map(([namaProduk, { harga, gambar }]) => ({ namaProduk, harga, gambar }));
         setTopMenu(sortedMenu);
 
-        // Set recent transactions
-        setRecentTransactions(transaksiData.data);
+        // Set recent transactions to only today's transactions
+        setRecentTransactions(todayTransactions);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
