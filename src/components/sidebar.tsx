@@ -6,23 +6,26 @@ import Image from "next/image";
 import Loading from "./loading";
 
 const menuItems = [
-  { title: "Dashboard", icon: <ChartBar size={24} />, path: "/dashboard" },
-  { title: "Transaksi", icon: <HandCoins size={24} />, path: "/transaksi" },
-  { title: "Data Produk", icon: <Package size={24} />, path: "/dataproduk" },
-  { title: "Riwayat", icon: <ClockCounterClockwise size={24} />, path: "/riwayat" },
-  { title: "Data Pelanggan", icon: <ClockCounterClockwise size={24} />, path: "/datapelanggan" },
-  { title: "Kelola Pengguna", icon: <Users size={24} />, path: "/akun" }
+  { title: "Dashboard", icon: <ChartBar size={24} />, path: "/dashboard", roles: ["Admin", "Petugas"] },
+  { title: "Transaksi", icon: <HandCoins size={24} />, path: "/transaksi", roles: ["Admin", "Petugas"] },
+  { title: "Data Produk", icon: <Package size={24} />, path: "/dataproduk", roles: ["Admin", "Petugas"] },
+  { title: "Riwayat", icon: <ClockCounterClockwise size={24} />, path: "/riwayat", roles: ["Admin", "Petugas"] },
+  { title: "Data Pelanggan", icon: <ClockCounterClockwise size={24} />, path: "/datapelanggan", roles: ["Admin", "Petugas"] },
+  { title: "Kelola Pengguna", icon: <Users size={24} />, path: "/akun", roles: ["Admin"] }
 ];
 
 export default function Sidebar(props: { className?: string }) {
   const router = useRouter();
   const [currentPath, setCurrentPath] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Set current path untuk menandai menu aktif
   useEffect(() => {
     if (typeof window !== "undefined") {
       setCurrentPath(window.location.pathname);
+      const role = window.localStorage.getItem('session_user_hakAkses');
+      setUserRole(role);
     }
   }, []);
 
@@ -54,7 +57,7 @@ export default function Sidebar(props: { className?: string }) {
           
           <div className="py-4">
             <ul>
-              {menuItems.map((item) => (
+              {menuItems.filter(item => item.roles.includes(userRole || "")).map((item) => (
                 <li
                   key={item.title}
                   className={`flex justify-start items-center gap-4 p-3 cursor-pointer rounded-md hover:bg-blue-100 transition-all ${
@@ -70,9 +73,9 @@ export default function Sidebar(props: { className?: string }) {
           </div>
         </div>
 
-        <div className="w-full h-[0.5px] bg-gray-500 bg-opacity-50 my-2"></div>
+        {/* <div className="w-full h-[0.5px] bg-gray-500 bg-opacity-50 my-2"></div> */}
         
-        <div className="py-4">
+        <div className="w-full h-[0.5px] bg-gray-500 bg-opacity-50 -mt-10">
           <ul>
             <li
               className="flex justify-start items-center gap-4 p-3 cursor-pointer rounded-md hover:bg-red-100 transition-all"

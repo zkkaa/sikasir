@@ -6,34 +6,49 @@ import Load from "../components/Load";
 import { useCallback, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
-import { LockKeyOpen } from "@phosphor-icons/react";
+import { LockKeyOpen, WarningCircle } from "@phosphor-icons/react";
 
 export default function Page() {
-    const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const [showLoginSucces, setShowLoginSucces] = useState(false);  
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const [showLoginSucces, setShowLoginSucces] = useState(false);
+  const [showError, setShowError] = useState(false);
 
-    const authUser = useCallback(async (formData: FormData) => {
-        return await axios.post("/api/signin", {
-            username: formData.get('username'),
-            password: formData.get('password')
-        }).then((response) => {
-            if(response.status === 200){
-                const localStorage = window.localStorage;
+  const authUser = useCallback(async (formData: FormData) => {
+    return await axios.post("/api/signin", {
+      username: formData.get('username'),
+      password: formData.get('password')
+    }).then((response) => {
+      if(response.status === 200){
+        const localStorage = window.localStorage;
 
-                localStorage.setItem('session_user_name', response.data.data.username);
-                localStorage.setItem('session_user_hakAkses', response.data.data.hakAkses);
+        localStorage.setItem('session_user_name', response.data.data.username);
+        localStorage.setItem('session_user_hakAkses', response.data.data.hakAkses);
 
-                // setShowLoginSucces(true);
-                router.push(response.data.data.hakAkses === "Admin" ? "/dashboard" : "/transaksi");
-            }
-        }).catch((error: AxiosError) => {
-            const { message } = error.response?.data as { message: string };
-            alert(message);
-        }).finally(() => setIsLoading(false));
-    }, [router]);
+        setShowLoginSucces(true);
+      }
+    }).catch((error: AxiosError) => {
+      const { message } = error.response?.data as { message: string };
+      alert(message);
+      setShowError(true);
+    }).finally(() => setIsLoading(false));
+  }, []);
 
-    const signInHandler = (formData: FormData) => {setIsLoading(true); authUser(formData)};
+  const signInHandler = (formData: FormData) => {
+    setIsLoading(true);
+    authUser(formData);
+  };
+
+  const handleSuccessOk = () => {
+    setShowLoginSucces(false);
+    const hakAkses = window.localStorage.getItem('session_user_hakAkses');
+    router.push(hakAkses === "Admin" ? "/dashboard" : "/transaksi");
+  };
+
+  const handleErrorOk = () => {
+    setShowError(false);
+    window.location.reload();
+  };
 
   return isLoading ? (
     <Load />
@@ -63,22 +78,34 @@ export default function Page() {
       </div>
 
       {showLoginSucces && (
-          <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-blue-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <LockKeyOpen size={48} color="white"/>
-              </div>
-              <h1 className="font-bold text-2xl text-blue-500 mt-3">Berhasil</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Anda Berhasil Masuk</p>
-              <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowLoginSucces(false)}>
-                Oke
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30">
+          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
+            <div className="w-24 h-24 bg-blue-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
+              <LockKeyOpen size={48} color="white"/>
             </div>
+            <h1 className="font-bold text-2xl text-blue-500 mt-3">Berhasil</h1>
+            <p className="text-zinc-600 leading-6 mt-3">Anda Berhasil Masuk</p>
+            <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={handleSuccessOk}>
+              Oke
+            </button>
           </div>
-          </>
-        )}
+        </div>
+      )}
 
+      {showError && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30">
+          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
+            <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
+              <WarningCircle size={48} color="white"/>
+            </div>
+            <h1 className="font-bold text-2xl text-red-500 mt-3">Gagal!</h1>
+            <p className="text-zinc-600 leading-6 mt-3">Login gagal</p>
+            <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={handleErrorOk}>
+              Oke
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
