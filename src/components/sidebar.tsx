@@ -1,16 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { HandCoins, ChartBar, Users, ClockCounterClockwise, Package, X, SignOut } from "@phosphor-icons/react";
+import { HandCoins, ChartBar, Users, ClockCounterClockwise, Package, X, SignOut, IdentificationCard } from "@phosphor-icons/react";
 import Image from "next/image";
 import Loading from "./loading";
+import axios from "axios";
 
 const menuItems = [
   { title: "Dashboard", icon: <ChartBar size={24} />, path: "/dashboard", roles: ["Admin", "Petugas"] },
   { title: "Transaksi", icon: <HandCoins size={24} />, path: "/transaksi", roles: ["Admin", "Petugas"] },
   { title: "Data Produk", icon: <Package size={24} />, path: "/dataproduk", roles: ["Admin", "Petugas"] },
   { title: "Riwayat", icon: <ClockCounterClockwise size={24} />, path: "/riwayat", roles: ["Admin", "Petugas"] },
-  { title: "Data Pelanggan", icon: <ClockCounterClockwise size={24} />, path: "/datapelanggan", roles: ["Admin", "Petugas"] },
+  { title: "Data Pelanggan", icon: <IdentificationCard size={24} />, path: "/datapelanggan", roles: ["Admin", "Petugas"] },
   { title: "Kelola Pengguna", icon: <Users size={24} />, path: "/akun", roles: ["Admin"] }
 ];
 
@@ -39,9 +40,15 @@ export default function Sidebar(props: { className?: string }) {
   };
 
   // Fungsi Logout
-  const handleLogout = () => {
-    // Implementasi logout di sini
-    console.log("User logged out");
+  const handleLogout = async () => {
+    try {
+      await axios.get("/api/signout");
+      window.localStorage.removeItem('session_user_name');
+      window.localStorage.removeItem('session_user_hakAkses');
+      router.push("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -73,16 +80,14 @@ export default function Sidebar(props: { className?: string }) {
           </div>
         </div>
 
-        {/* <div className="w-full h-[0.5px] bg-gray-500 bg-opacity-50 my-2"></div> */}
-        
-        <div className="w-full h-[0.5px] bg-gray-500 bg-opacity-50 -mt-10">
+        <div className="py-4">
           <ul>
             <li
-              className="flex justify-start items-center gap-4 p-3 cursor-pointer rounded-md hover:bg-red-100 transition-all"
+              className="flex justify-start items-center gap-4 p-3 cursor-pointer rounded-md hover:bg-blue-200 transition-all"
               onClick={handleLogout}
             >
               <SignOut size={24} />
-              <span>Logout</span>
+              <span>Keluar</span>
             </li>
           </ul>
         </div>

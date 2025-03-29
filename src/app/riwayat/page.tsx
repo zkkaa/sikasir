@@ -152,7 +152,7 @@ const RiwayatTransaksiPage = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
           {/* Tombol Export & Cetak (Muncul Jika Ada yang Dipilih) */}
           {selectedRows.length > 0 && (
-            <div className="flex justify-end gap-2 mb-4">
+            <div className="flex justify-end gap-2 mb-4 mt-2 mr-2">
               <button 
                 className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600"
                 onClick={exportToPDF}

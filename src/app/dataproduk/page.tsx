@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { Package, PlusCircle, PencilSimple, TrashSimple, MagnifyingGlass, CheckCircle, XCircle, FileImage } from "@phosphor-icons/react";
+import { Package, PlusCircle, PencilSimple, MagnifyingGlass, CheckCircle, XCircle, FileImage } from "@phosphor-icons/react";
 import Image from "next/image";
 import currency from "currency.js"; // Import currency.js
 
@@ -248,9 +248,9 @@ const EditProduct = async (id: number) => {
                 <button className="p-2 text-blue-400 rounded-full hover:text-blue-500 hover:bg-gray-100" onClick={() => handleEditClick(product)}>
                   <PencilSimple size={24} weight="fill"/>
                 </button>
-                <button className="p-2 text-red-400 rounded-full hover:text-red-500 hover:bg-gray-100" onClick={() => setShowConfirm(product.id)}>
+                {/* <button className="p-2 text-red-400 rounded-full hover:text-red-500 hover:bg-gray-100" onClick={() => setShowConfirm(product.id)}>
                   <TrashSimple size={24} weight="fill"/>
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

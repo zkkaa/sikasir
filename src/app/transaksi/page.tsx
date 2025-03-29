@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/sidebar';
 import HeadPage from "@/components/Headpage";
-import { HandCoins, MagnifyingGlass, Plus, Minus, WarningCircle, CheckCircle } from "@phosphor-icons/react";
+import { HandCoins, MagnifyingGlass, Plus, Minus, WarningCircle, CheckCircle, XCircle } from "@phosphor-icons/react";
 import Image from 'next/image';
 import TitlePage from '@/components/titlesection';
 import currency from "currency.js"; // Import currency.js
@@ -34,6 +34,7 @@ const TransaksiPage = () => {
   const [filterkategori, setFilterkategori] = useState("All");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showNominalKurang, setShowNominalKurang] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [previewImage] = useState<string>("");
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -169,6 +170,14 @@ const TransaksiPage = () => {
     const totalHarga = orders.reduce((total, order) => total + order.harga * order.quantity, 0);
     const paymentAmount = parseInt(payment.replace(/\D/g, "")) || 0;
     const kembalian = paymentAmount - totalHarga;
+
+    if (kembalian < 0) {
+      setShowNominalKurang(true);
+      setTimeout(() => {
+        setShowNominalKurang(false);
+      }, 2000);
+      return;
+    }
 
     const transactionData = {
       pelangganId: selectedCustomer?.id,
@@ -473,22 +482,18 @@ const TransaksiPage = () => {
       )}
 
       {showSucces && (
-        <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-green-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <CheckCircle size={48} color="white"/>
-              </div>
-              <h1 className="font-bold text-2xl text-green-500 mt-3">Berhasil</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Produk berhasil ditambahkan</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
+            <div className="w-24 h-24 bg-green-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
+              <CheckCircle size={48} color="white"/>
             </div>
+            <h1 className="font-bold text-2xl text-green-500 mt-3">Berhasil</h1>
+            <p className="text-zinc-600 leading-6 mt-3">Produk berhasil ditambahkan</p>
           </div>
-          <Sidebar />
-        </>
+        </div>
       )}
 
       {showError && (
-        <>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
               <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
@@ -501,8 +506,21 @@ const TransaksiPage = () => {
               </button>
             </div>
           </div>
-          <Sidebar />
-        </>
+      )}
+
+      {showNominalKurang && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
+            <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
+              <XCircle size={48} color="white"/>
+            </div>
+            <h1 className="font-bold text-2xl text-red-500 mt-3">Nominal Kurang!</h1>
+            <p className="text-zinc-600 leading-6 mt-3">Nominal bayara anda kurang</p>
+            <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowSucces(false)}>
+              Oke
+            </button>
+          </div>
+        </div>
       )}
 
     </>

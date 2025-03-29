@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { MagnifyingGlass, FileArrowDown, CaretDoubleRight, CaretDoubleLeft } from "@phosphor-icons/react";
+import { MagnifyingGlass, FileArrowDown, CaretDoubleRight, CaretDoubleLeft, IdentificationCard  } from "@phosphor-icons/react";
 import jsPDF from "jspdf";
 import 'jspdf-autotable';
 
@@ -162,7 +162,7 @@ const DataPelangganPage = () => {
       <Sidebar />
       <div className="lg:ml-60 p-4 md:p-6 lg:p-8 bg-gray-100 flex flex-col gap-6 h-screen">
         <HeadPage
-          icon={<MagnifyingGlass size={32} color="#ffffff" weight="fill" />}
+          icon={<IdentificationCard  size={32} color="#ffffff" weight="fill" />}
           title="Data Pelanggan"
           deskrip="Lihat data pelanggan yang terdaftar"
         />

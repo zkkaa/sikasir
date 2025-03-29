@@ -42,7 +42,7 @@ export default function Page() {
   const handleSuccessOk = () => {
     setShowLoginSucces(false);
     const hakAkses = window.localStorage.getItem('session_user_hakAkses');
-    router.push(hakAkses === "Admin" ? "/dashboard" : "/transaksi");
+    router.push(hakAkses === "Admin" ? "/dashboard" : "/dashboard");
   };
 
   const handleErrorOk = () => {
