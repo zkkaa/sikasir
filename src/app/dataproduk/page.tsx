@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import HeadPage from "@/components/Headpage";
-import { Package, PlusCircle, PencilSimple, MagnifyingGlass, CheckCircle, XCircle, FileImage } from "@phosphor-icons/react";
+import { Package, PlusCircle, PencilSimple, MagnifyingGlass, CheckCircle, FileImage, WarningCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import currency from "currency.js"; // Import currency.js
+import ConfirPopup from "@/components/ComfirPopup";
+import ConfirmCheckPopup from "@/components/ConfirCheckPopup";
 
 // Struktur data produk
 interface Product {
@@ -256,29 +258,8 @@ const EditProduct = async (id: number) => {
           ))}
         </div>
 
-        {/* Popup Konfirmasi Hapus */}
-        {showConfirm !== null && (
-          <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <XCircle  size={48} color="white"/>
-              </div>
-              <h1 className="font-bold text-2xl text-red-500 mt-3">Hapus?</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Apakah anda yakin ingin menghapus produk ini?</p>
-              <div className="flex justify-center gap-4 mt-8">
-                <button className="px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowConfirm(null)}>Batal</button>
-                <button className="px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => DeleteProduct(showConfirm)}>Hapus</button>
-              </div>
-            </div>
-          </div>
-          <Sidebar />
-          </>
-        )}
-
         {/* Popup Tambah Produk */}
         {showForm && (
-          <>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-[440px] flex flex-col gap-4">
               <h2 className="text-xl font-bold">Tambah Produk</h2>              
@@ -314,13 +295,10 @@ const EditProduct = async (id: number) => {
               </div>
             </div>
           </div>
-          <Sidebar />
-          </>
         )}
 
         {/* Popup Edit Produk */}
         {showEditForm && selectedProduct && (
-          <>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-[440px] flex flex-col gap-4">
               <h2 className="text-xl font-bold">Edit Produk</h2>              
@@ -349,45 +327,14 @@ const EditProduct = async (id: number) => {
               </div>
             </div>
           </div>
-          <Sidebar />
-          </>
         )}
 
-        {showSucces && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-                <div className="w-24 h-24 bg-green-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                  <CheckCircle size={48} color="white"/>
-                </div>
-                <h1 className="font-bold text-2xl text-green-500 mt-3">Berhasil</h1>
-                <p className="text-zinc-600 leading-6 mt-3">Produk berhasil ditambahkan</p>
-                <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-green-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-green-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowSucces(false)}>
-                  Oke
-                </button>
-              </div>
-            </div>
-            <Sidebar />
-          </>
-        )}
+        {/* Popup Konfirmasi Hapus */}
+        {showConfirm !== null && (<ConfirmCheckPopup icon={<WarningCircle size={48} color="white"/>} title="Hapus?" deskrip="Apakah anda yakin ingin menghapus produk ini?" cancelText="Batal" confirText="Hapus" color1="red" onCancel={() => setShowConfirm(null)} onConfirm={() => DeleteProduct(showConfirm)} /> )}
 
-        {showEditSucces && (
-          <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-blue-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <CheckCircle size={48} color="white"/>
-              </div>
-              <h1 className="font-bold text-2xl text-blue-500 mt-3">Berhasil</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Produk berhasil diperbaharui</p>
-              <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowEditSucces(false)}>
-                Oke
-              </button>
-            </div>
-          </div>
-          <Sidebar />
-          </>
-        )}
+        {showSucces && (<ConfirPopup icon={<CheckCircle size={48} color="white"/>} title="Berhasil" deskrip="Produk berhasil ditambahkan" color1="blue" onClick={() => setShowSucces(false)} /> )}
+
+        {showEditSucces && (<ConfirPopup icon={<CheckCircle size={48} color="white"/>} title="Berhasil" deskrip="Produk berhasil diperbaharui" color1="blue" onClick={() => setShowEditSucces(false)} /> )}
       </div>
     </>
   );

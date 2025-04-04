@@ -15,8 +15,12 @@ export async function POST(req: NextRequest) {
   try {
     const { pelangganId, kasirId, totalHarga, uangDibayar, kembalian, items } = await req.json();
 
-    if (!pelangganId || !kasirId || !totalHarga || !uangDibayar || !kembalian || !items || items.length === 0) {
+    if (!pelangganId || !kasirId || !totalHarga || !uangDibayar || kembalian === undefined || !items || items.length === 0) {
       return NextResponse.json({ error: "Semua data harus diisi!" }, { status: 400 });
+    }
+
+    if (uangDibayar < totalHarga) {
+      return NextResponse.json({ error: "Nominal bayar kurang!" }, { status: 400 });
     }
 
     // Validate produk_id in items

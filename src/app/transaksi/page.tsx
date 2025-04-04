@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/sidebar';
 import HeadPage from "@/components/Headpage";
-import { HandCoins, MagnifyingGlass, Plus, Minus, WarningCircle, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { HandCoins, MagnifyingGlass, Plus, Minus, WarningCircle, CheckCircle } from "@phosphor-icons/react";
 import Image from 'next/image';
 import TitlePage from '@/components/titlesection';
-import currency from "currency.js"; // Import currency.js
+import currency from "currency.js"; 
+import ConfirmCheckPopup from '@/components/ConfirCheckPopup';
+import ConfirPopup from '@/components/ComfirPopup';
 
-// Tipe data untuk menu
 interface Product {
   id: number;
   nama: string;
@@ -92,7 +93,6 @@ const TransaksiPage = () => {
       );
     }
   };
-  
 
   // Fungsi mengurangi qty atau menghapus jika qty = 0
   const decreaseOrder = (id: number) => {
@@ -123,6 +123,11 @@ const TransaksiPage = () => {
         return orderedItem ? { ...menu, stok: menu.stok + orderedItem.quantity } : menu;
       })
     );
+    setShowDetail(false);
+    setSelectedCustomer(null);
+    setCustomerSearchTerm("");
+    setPayment("");
+    setChange(0);
     setShowConfirm(false);
   };
 
@@ -168,17 +173,14 @@ const TransaksiPage = () => {
   // Handle bayar click
   const handleBayarClick = async () => {
     const totalHarga = orders.reduce((total, order) => total + order.harga * order.quantity, 0);
-    const paymentAmount = parseInt(payment.replace(/\D/g, "")) || 0;
+    const paymentAmount = parseInt(payment.replace(/\D/g, ""), 10) || 0;
     const kembalian = paymentAmount - totalHarga;
-
-    if (kembalian < 0) {
+  
+    if (isNaN(paymentAmount) || paymentAmount < totalHarga) {
       setShowNominalKurang(true);
-      setTimeout(() => {
-        setShowNominalKurang(false);
-      }, 2000);
       return;
     }
-
+  
     const transactionData = {
       pelangganId: selectedCustomer?.id,
       kasirId: 1, // Replace with actual kasirId
@@ -191,7 +193,7 @@ const TransaksiPage = () => {
         subtotal: order.harga * order.quantity,
       })),
     };
-
+  
     try {
       const response = await fetch("/api/transaksi", {
         method: "POST",
@@ -200,30 +202,20 @@ const TransaksiPage = () => {
         },
         body: JSON.stringify(transactionData),
       });
-
+  
       if (response.ok) {
         const result = await response.json();
         console.log(result.message);
         setShowSucces(true);
         setTransactionDate(new Date().toLocaleString());
-        setTimeout(() => {
-          setShowSucces(false);
-          setShowDetail(true);
-          handleCustomerSearch({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
-        }, 2000);
       } else {
-        console.error("Failed to process transaction");
+        const error = await response.json();
+        console.error("Error:", error.message);
         setShowError(true);
-        setTimeout(() => {
-          setShowError(false);
-        }, 2000);
       }
     } catch (error) {
       console.error("Error processing transaction:", error);
       setShowError(true);
-      setTimeout(() => {
-        setShowError(false);
-      }, 2000);
     }
   };
 
@@ -232,6 +224,7 @@ const TransaksiPage = () => {
     setShowDetail(false);
     setOrders([]);
     setSelectedCustomer(null);
+    setCustomerSearchTerm("");
     setPayment("");
     setChange(0);
   };
@@ -247,29 +240,18 @@ const TransaksiPage = () => {
       <div className="lg:ml-60 p-6 bg-gray-100 flex flex-col gap-6 h-screen">
         <HeadPage icon={<HandCoins size={32} color="#ffffff" weight="fill" />} title="Transaksi" deskrip="Transaksi secara cepat dan akurat" />
         <div className="flex bg-gray-100 h-[89%]">
-          {/* Menu */}
+
           <div className="w-3/5 p-6 bg-white shadow-lg rounded-lg">
             <TitlePage title='Menu'/>
             <div className="flex items-center justify-between mb-4 -mt-2">
-              {/* Filter Kategori */}
-              <select 
-                className="p-2 border rounded-lg outline-none"
-                value={filterkategori}
-                onChange={(e) => setFilterkategori(e.target.value)}>
+              <select className="p-2 border rounded-lg outline-none" value={filterkategori} onChange={(e) => setFilterkategori(e.target.value)}>
                 <option value="All">Semua</option>
                 <option value="Makanan">Makanan</option>
                 <option value="Minuman">Minuman</option>
               </select>
-              {/* Search Input */}
               <div className="relative border rounded-lg w-56">
                 <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Cari produk..." 
-                  className="border p-2 pl-10 rounded-lg w-full outline-none"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <input type="text" placeholder="Cari produk..." className="border p-2 pl-10 rounded-lg w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
               </div>
             </div>
             <div className="max-h-[485px] overflow-y-auto overflow-x-hidden">
@@ -291,12 +273,10 @@ const TransaksiPage = () => {
             </div>
           </div>
 
-          {/* Pesanan */}
           <div className="w-2/5 p-6 bg-white shadow-lg rounded-lg ml-6 flex flex-col h-full">
             <TitlePage title='Pesanan' />
             {orders.length > 0 ? (
               <>
-                {/* Container tabel dengan scrolling */}
                 <div className="overflow-auto -mt-2 max-h-[165px]">
                   <table className="w-full border-collapse border">
                     <thead className='sticky -top-[0.4px]'>
@@ -332,21 +312,11 @@ const TransaksiPage = () => {
                 <div className='w-full mt-4'>
                   <div className="relative border rounded-lg w-full mb-4">
                     <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Cari Pelanggan" 
-                      className="border p-2 pl-10 rounded-lg w-full outline-none"
-                      value={customerSearchTerm}
-                      onChange={handleCustomerSearch}
-                    />
+                    <input type="text" placeholder="Cari Pelanggan" className="border p-2 pl-10 rounded-lg w-full outline-none" value={customerSearchTerm} onChange={handleCustomerSearch}/>
                     {suggestions.length > 0 && (
                       <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-40 overflow-y-auto">
                         {suggestions.map((customer) => (
-                          <div 
-                            key={customer.id} 
-                            className="p-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => handleCustomerSelect(customer)}
-                          >
+                          <div key={customer.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCustomerSelect(customer)}>
                             {customer.nama} - {customer.noHp}
                           </div>
                         ))}
@@ -377,14 +347,8 @@ const TransaksiPage = () => {
                     </div>
                   )}
                   <div>
-                    <h2 className="font-medium mt-3">Total Bayar</h2>
-                    <input 
-                      type="text" 
-                      className="w-full p-2 border rounded my-2" 
-                      placeholder="Masukkan jumlah uang" 
-                      value={payment} 
-                      onChange={handlePaymentChange} 
-                    />
+                    <h2 className="font-medium mt-3">Nominal Bayar</h2>
+                    <input type="text" className="w-full p-2 border rounded my-2" placeholder="Masukkan jumlah uang" value={payment} onChange={handlePaymentChange} />
                     <p className="text-gray-600 mb-4">Kembalian: <span className="font-bold">Rp {change.toLocaleString()}</span></p>
                   </div>
                 </div>
@@ -393,16 +357,13 @@ const TransaksiPage = () => {
                   <button className="w-1/2 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={handleBayarClick} >Bayar</button>
                 </div>
               </>
-            ) : (
-              <p className="text-center text-gray-500 mt-16">Belum ada pesanan</p>
-            )}
+            ) : ( <p className="text-center text-gray-500 mt-16">Belum ada pesanan</p> )}
           </div>
         </div>
       </div>
 
-      {/* Popup Detail Transaksi */}
       {showDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">{/* Popup Detail Transaksi */}
           <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] flex flex-col gap-4 print:w-full print:p-0 print:shadow-none">
             <h2 className="text-xl font-bold text-center">Detail Transaksi</h2>
             <div className="border-b pb-2">
@@ -452,76 +413,16 @@ const TransaksiPage = () => {
         </div>
       )}
 
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-lg mb-4"></p>
-            <div className="flex justify-end gap-4">
-              <button className="px-4 py-2 bg-gray-300 rounded-lg" onClick={() => setShowConfirm(false)}>Batal</button>
-              <button className="px-4 py-2 bg-red-500 text-white rounded-lg" onClick={clearOrders}>Ya, Batalkan</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showConfirm && (<ConfirmCheckPopup icon={<WarningCircle size={48} color="white"/>} title="Batalkan?" deskrip="Apakah Anda yakin ingin membatalkan pesanan?" cancelText="Kembali" confirText="Ya, Batalkan" color1="red" onCancel={() => setShowConfirm(false)} onConfirm={clearOrders} />)}
 
-      {/* Popup Konfirmasi Hapus */}
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-            <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-              <WarningCircle   size={48} color="white"/>
-            </div>
-            <h1 className="font-bold text-2xl text-red-500 mt-3">Batalkan?</h1>
-            <p className="text-zinc-600 leading-6 mt-3">Apakah Anda yakin ingin membatalkan pesanan?</p>
-            <div className="flex justify-center gap-4 mt-8">
-              <button className="px-3 py-2 flex items-center justify-center bg-blue-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-blue-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowConfirm(false)}>Kembali</button>
-              <button className="px-3 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={clearOrders}>Batalkan</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showSucces && (<ConfirPopup icon={<CheckCircle size={48} color="white"/>} title=" Transaksi Berhasil" deskrip="Produk berhasil ditambahkan" color1="blue" onClick={() => {
+        setShowSucces(false);
+        setShowDetail(true); 
+      }} />)}
 
-      {showSucces && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-            <div className="w-24 h-24 bg-green-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-              <CheckCircle size={48} color="white"/>
-            </div>
-            <h1 className="font-bold text-2xl text-green-500 mt-3">Berhasil</h1>
-            <p className="text-zinc-600 leading-6 mt-3">Produk berhasil ditambahkan</p>
-          </div>
-        </div>
-      )}
+      {showError && (<ConfirPopup icon={<WarningCircle size={48} color="white"/>} title="Gagal!" deskrip="Transaksi gagal" color1="red" onClick={() => setShowError(false)} />)}
 
-      {showError && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-              <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-                <WarningCircle size={48} color="white"/>
-              </div>
-              <h1 className="font-bold text-2xl text-red-500 mt-3">Gagal!</h1>
-              <p className="text-zinc-600 leading-6 mt-3">Transaksi gagal</p>
-              <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowSucces(false)}>
-                Oke
-              </button>
-            </div>
-          </div>
-      )}
-
-      {showNominalKurang && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="w-64 bg-white shadow-[0px_0px_15px_rgba(0,0,0,0.09)] p-8 relative overflow-hidden rounded-xl">
-            <div className="w-24 h-24 bg-red-500 rounded-full absolute -right-5 -top-7 flex items-center justify-center pt-3 pr-3">
-              <XCircle size={48} color="white"/>
-            </div>
-            <h1 className="font-bold text-2xl text-red-500 mt-3">Nominal Kurang!</h1>
-            <p className="text-zinc-600 leading-6 mt-3">Nominal bayara anda kurang</p>
-            <button className="mx-auto mt-8 px-6 py-2 flex items-center justify-center bg-red-400 rounded-2xl font-[600] text-white hover:translate-x-[-0.04rem] hover:translate-y-[-0.04rem] hover:shadow-red-500 hover:shadow-md active:translate-x-[0.04rem] active:translate-y-[0.04rem] active:shadow-sm" onClick={() => setShowSucces(false)}>
-              Oke
-            </button>
-          </div>
-        </div>
-      )}
+      {showNominalKurang && (<ConfirPopup icon={<WarningCircle size={48} color="white"/>} title="Nominal Kurang!" deskrip="Nominal bayar anda kurang" color1="red" onClick={() => setShowNominalKurang(false)} /> )}
 
     </>
   );
