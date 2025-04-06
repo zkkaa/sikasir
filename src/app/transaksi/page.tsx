@@ -47,6 +47,7 @@ const TransaksiPage = () => {
   const [transactionDate, setTransactionDate] = useState<string>("");
   const [showSucces, setShowSucces] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [isGuestCustomer, setIsGuestCustomer] = useState(false);
 
   const fetchProduk = async()=> {
     const response = await fetch("/api/produk", {
@@ -126,6 +127,8 @@ const TransaksiPage = () => {
     setShowDetail(false);
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
+    setSuggestions([]);
+    setIsGuestCustomer(false);
     setPayment("");
     setChange(0);
     setShowConfirm(false);
@@ -159,6 +162,15 @@ const TransaksiPage = () => {
     setSuggestions([]);
   };
 
+  const handleGuestCustomer = () => {
+    const guestCustomer = customers.find(customer => customer.id === 18);
+    if (guestCustomer) {
+      setSelectedCustomer(guestCustomer);
+      setCustomerSearchTerm(guestCustomer.nama);
+    }
+    setIsGuestCustomer(true);
+  };
+
   // Handle payment input change
   const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, ""); // Hanya angka
@@ -182,8 +194,8 @@ const TransaksiPage = () => {
     }
   
     const transactionData = {
-      pelangganId: selectedCustomer?.id,
-      kasirId: 1, // Replace with actual kasirId
+      pelangganId: selectedCustomer?.id, 
+      kasirId: 1, 
       totalHarga,
       uangDibayar: paymentAmount,
       kembalian,
@@ -225,6 +237,8 @@ const TransaksiPage = () => {
     setOrders([]);
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
+    setSuggestions([]);
+    setIsGuestCustomer(false);
     setPayment("");
     setChange(0);
   };
@@ -312,8 +326,8 @@ const TransaksiPage = () => {
                 <div className='w-full mt-4'>
                   <div className="relative border rounded-lg w-full mb-4">
                     <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-                    <input type="text" placeholder="Cari Pelanggan" className="border p-2 pl-10 rounded-lg w-full outline-none" value={customerSearchTerm} onChange={handleCustomerSearch}/>
-                    {suggestions.length > 0 && (
+                    <input type="text" placeholder="Cari Pelanggan" className="border p-2 pl-10 rounded-lg w-full outline-none" value={customerSearchTerm} onChange={handleCustomerSearch} disabled={isGuestCustomer}/>
+                    {suggestions.length > 0 && !isGuestCustomer && (
                       <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-40 overflow-y-auto">
                         {suggestions.map((customer) => (
                           <div key={customer.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCustomerSelect(customer)}>
@@ -323,6 +337,12 @@ const TransaksiPage = () => {
                       </div>
                     )}
                   </div>
+                  {!isGuestCustomer && (
+                    <div className="flex items-center gap-2 mb-4">
+                      <input type="checkbox" id="guestCustomer" className="cursor-pointer" onChange={handleGuestCustomer}/>
+                      <label htmlFor="guestCustomer" className="cursor-pointer">Pelanggan</label>
+                    </div>
+                  )}
                   {selectedCustomer && (
                     <div className="mt-2 rounded mb-4">
                       <table className="w-full">
