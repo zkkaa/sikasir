@@ -5,10 +5,25 @@ import { Grafik } from "../../components/grafik";
 import TitlePage from "@/components/titlesection";
 import HeadPage from "@/components/Headpage";
 import { ShoppingCart, House, CurrencyCircleDollar, WarningCircle, ListChecks } from "@phosphor-icons/react";
+import { useState, useEffect } from "react";
+
+interface Transaction {
+  id: number;
+  waktuTransaksi: string;
+  pelangganNama: string;
+  items: { namaProduk: string; qty: number; }[]; 
+  totalHarga: number;
+}
 
 // Fungsi format uang
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(amount);
+};
+
+// Format date and time
+const formatDateTime = (dateTime: string) => {
+  const date = new Date(dateTime);
+  return date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 };
 
 // Dummy data sementara (nantinya ambil dari API/backend)
@@ -20,7 +35,21 @@ const dataDashboard = {
 };
 
 
-export default function Utama() {
+const Dashboard = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  const fetchTransactions = async () => {
+      const response = await fetch("/api/transaksi", {
+        method: "GET",
+      });
+      const data = await response.json();
+      setTransactions(data.data || []);
+    };
+  
+    useEffect(() => {
+      fetchTransactions();
+    }, []);
+
   return (
     <>
       <Sidebar />
@@ -53,24 +82,38 @@ export default function Utama() {
               </tbody>
             </table>
           </div>
-          <div className="col-span-3 bg-white p-6 rounded-lg">
+          <div className="col-span-5 bg-white p-6 rounded-lg">
             <TitlePage title="Aktivitas Transaksi Terbaru" />
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-blue-200">
+                  <th className="p-2 text-left">ID Transaksi</th>
                   <th className="p-2 text-left">Nama Pelanggan</th>
-                  <th className="p-2 text-left">Produk</th>
-                  <th className="p-2 text-right">Kuantitas</th>
+                  <th className="p-2 text-left">Tanggal & Waktu</th>
+                  <th className="p-2 text-left">Produk & Qty</th>
+                  <th className="p-2 text-center w-36">Total Pesanan</th>
                   <th className="p-2 text-right">Total Harga</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b-2 border-gray-100">
-                  <td className="p-2">Azka</td>
-                  <td className="p-2">Nasi Lambada</td>
-                  <td className="p-2 text-right">1</td>
-                  <td className="p-2 text-right">{formatCurrency(100000)}</td>
-                </tr>
+                {transactions.slice(0, 7).map((transaction) => (
+                  <tr key={transaction.id} className="border-b-2 border-gray-100">
+                    <td className="p-2">{transaction.id}</td>
+                    <td className="p-2">{transaction.pelangganNama}</td>
+                    <td className="p-2">{formatDateTime(transaction.waktuTransaksi)}</td>
+                    <td className="p-2">
+                      {transaction.items.map((item, index) => (
+                        <div key={index}>
+                          {item.namaProduk} ({item.qty})
+                        </div>
+                      ))}
+                    </td>
+                    <td className="p-2 text-center">
+                      {transaction.items.reduce((total, item) => total + item.qty, 0)}
+                    </td>
+                    <td className="p-2 text-right">{formatCurrency(transaction.totalHarga)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -79,3 +122,6 @@ export default function Utama() {
     </>
   );
 }
+
+
+export default Dashboard;

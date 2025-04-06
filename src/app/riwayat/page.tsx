@@ -109,39 +109,23 @@ const RiwayatTransaksiPage = () => {
     <>
       <Sidebar />
       <div className="lg:ml-60 p-4 md:p-6 lg:p-8 bg-gray-100 flex flex-col gap-6 h-screen">
-        <HeadPage
-          icon={<Clock size={32} color="#ffffff" weight="fill" />}
-          title="Riwayat Transaksi"
-          deskrip="Lihat transaksi yang telah dilakukan"
-        />
+        <HeadPage icon={<Clock size={32} color="#ffffff" weight="fill" />} title="Riwayat Transaksi" deskrip="Lihat transaksi yang telah dilakukan" />
 
         {/* Pencarian & Filter */}
         <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
           <div className="relative w-full max-w-sm">
-            <MagnifyingGlass
-              size={20}
-              className="absolute left-3 top-2.5 text-gray-500"
-            />
-            <input
-              type="text"
-              placeholder="Cari ID atau Nama Pembeli..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <MagnifyingGlass size={20} className="absolute left-3 top-2.5 text-gray-500" />
+            <input type="text" placeholder="Cari ID atau Nama Pembeli..." className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-6">
-            <select
-              className="p-2 border rounded-lg"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-            >
+            <select className="p-2 border rounded-lg" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} >
               <option value="latest">Terbaru</option>
               <option value="oldest">Terlama</option>
             </select>
-            <input
-              type="date"
-              className="border p-2 rounded-lg"
+            <input type="date" className="border p-2 rounded-lg"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
             />
@@ -153,10 +137,7 @@ const RiwayatTransaksiPage = () => {
           {/* Tombol Export & Cetak (Muncul Jika Ada yang Dipilih) */}
           {selectedRows.length > 0 && (
             <div className="flex justify-end gap-2 mb-4 mt-2 mr-2">
-              <button 
-                className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600"
-                onClick={exportToPDF}
-              >
+              <button className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600" onClick={exportToPDF} >
                 <FileArrowDown size={20} /> Export PDF
               </button>
             </div>
@@ -183,11 +164,7 @@ const RiwayatTransaksiPage = () => {
                 <tr key={trans.id}>
                   {showCheckboxes && (
                     <td className="border p-2 text-center">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedRows.includes(trans.id)} 
-                        onChange={() => handleCheckboxChange(trans.id)} 
-                      />
+                      <input type="checkbox" checked={selectedRows.includes(trans.id)} onChange={() => handleCheckboxChange(trans.id)} />
                     </td>
                   )}
                   <td className="border p-2">{trans.id}</td>
@@ -195,10 +172,7 @@ const RiwayatTransaksiPage = () => {
                   <td className="border p-2">{trans.pelangganNama}</td>
                   <td className="border p-2">Rp {trans.totalHarga?.toLocaleString()}</td>
                   <td className="border p-2 flex gap-2 justify-center ">
-                    <button 
-                      className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600" 
-                      onClick={() => setSelectedTransaction(trans)}
-                    >
+                    <button className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600" onClick={() => setSelectedTransaction(trans)} >
                       Detail
                     </button>
                   </td>
