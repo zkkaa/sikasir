@@ -91,6 +91,8 @@ export async function GET() {
         qty: detailTransaksi.qty,
         subtotal: detailTransaksi.subtotal,
         namaProduk: produk.nama,
+        kategori: produk.kategori,
+        gambar: produk.gambar,
         hargaProduk: produk.harga,
       })
       .from(detailTransaksi)
@@ -103,7 +105,26 @@ export async function GET() {
       items: detailData.filter((detail) => detail.transaksiId === trx.id),
     }));
 
-    return NextResponse.json({ message: "success", data: result });
+    // Hitung produk terlaris
+    const productSales = detailData.reduce((acc: Record<number, { nama: string; kategori: string; gambar: string; harga: number; totalQty: number }>, detail) => {
+      if (!acc[detail.produkId]) {
+        acc[detail.produkId] = {
+          nama: detail.namaProduk,
+          kategori: detail.kategori,
+          gambar: detail.gambar ?? "",
+          harga: detail.hargaProduk,
+          totalQty: 0,
+        };
+      }
+      acc[detail.produkId].totalQty += detail.qty;
+      return acc;
+    }, {});
+
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.totalQty - a.totalQty)
+      .slice(0, 5);
+
+    return NextResponse.json({ message: "success", data: result, topProducts });
   } catch (error) {
     console.error("Error in GET /api/transaksi:", error);
     return NextResponse.json({ error: "Terjadi kesalahan pada server", details: error }, { status: 500 });

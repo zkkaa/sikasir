@@ -6,16 +6,30 @@ import TitlePage from "@/components/titlesection";
 import HeadPage from "@/components/Headpage";
 import { ShoppingCart, House, CurrencyCircleDollar, WarningCircle, ListChecks } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface Transaction {
   id: number;
   waktuTransaksi: string;
   pelangganNama: string;
-  items: { namaProduk: string; qty: number; }[]; 
+  items: { namaProduk: string; qty: number; }[];
   totalHarga: number;
 }
 
-// Fungsi format uang
+interface Product {
+  id: number;
+  stok: number;
+}
+
+interface TopProduct {
+  nama: string;
+  kategori: string;
+  gambar: string;
+  harga: number;
+  totalQty: number;
+}
+
+// Format currency
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(amount);
 };
@@ -26,29 +40,51 @@ const formatDateTime = (dateTime: string) => {
   return date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 };
 
-// Dummy data sementara (nantinya ambil dari API/backend)
-const dataDashboard = {
-  total_pendapatan: 200000,
-  jumlah_transaksi: 25,
-  jumlah_menu_tersedia: 15,
-  jumlah_menu_habis: 3
-};
-
-
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalPendapatan, setTotalPendapatan] = useState(0);
+  const [jumlahTransaksi, setJumlahTransaksi] = useState(0);
+  const [menuTersedia, setMenuTersedia] = useState(0);
+  const [menuHabis, setMenuHabis] = useState(0);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
 
+  // Fetch transactions
   const fetchTransactions = async () => {
-      const response = await fetch("/api/transaksi", {
-        method: "GET",
-      });
-      const data = await response.json();
-      setTransactions(data.data || []);
-    };
-  
-    useEffect(() => {
-      fetchTransactions();
-    }, []);
+    const response = await fetch("/api/transaksi", { method: "GET" });
+    const data = await response.json();
+    const today = new Date().toDateString();
+    const dailyTransactions = data.data.filter((trx: Transaction) => new Date(trx.waktuTransaksi).toDateString() === today);
+
+    setTransactions(dailyTransactions);
+    setTotalPendapatan(dailyTransactions.reduce((sum: number, trx: Transaction) => sum + trx.totalHarga, 0));
+    setJumlahTransaksi(dailyTransactions.length);
+  };
+
+  // Fetch products
+  const fetchProducts = async () => {
+    const response = await fetch("/api/produk", { method: "GET" });
+    const data = await response.json();
+    const available = data.data.filter((product: Product) => product.stok > 0).length;
+    const outOfStock = data.data.filter((product: Product) => product.stok === 0).length;
+
+    setProducts(data.data);
+    setMenuTersedia(available);
+    setMenuHabis(outOfStock);
+  };
+
+  // Fetch top products
+  const fetchTopProducts = async () => {
+    const response = await fetch("/api/transaksi", { method: "GET" });
+    const data = await response.json();
+    setTopProducts(data.topProducts || []);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+    fetchProducts();
+    fetchTopProducts();
+  }, []);
 
   return (
     <>
@@ -56,10 +92,10 @@ const Dashboard = () => {
       <div className="lg:ml-60 p-4 md:p-6 lg:p-8 bg-gray-100 flex flex-col gap-6">
         <HeadPage icon={<House size={32} color="#ffffff" weight="fill" />} title="Dashboard" deskrip="Selamat datang di Sikasir" />
         <div className="w-full grid sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-4 lg:gap-6">
-          <Card iconc="bg-yellow-200" textc="text-yellow-500" total={formatCurrency(dataDashboard.total_pendapatan)} title="Total Pendapatan Hari Ini" icon={<CurrencyCircleDollar />} /> 
-          <Card iconc="bg-blue-200" textc="text-blue-500" total={dataDashboard.jumlah_transaksi.toString()} title="Jumlah Transaksi Hari Ini" icon={<ShoppingCart />} /> 
-          <Card iconc="bg-green-200" textc="text-green-500" total={dataDashboard.jumlah_menu_tersedia.toString()} title="Jumlah Menu Yang Tersedia" icon={<ListChecks />} />
-          <Card iconc="bg-red-200" textc="text-red-500" total={dataDashboard.jumlah_menu_habis.toString()} title="Jumlah Menu Yang Habis" icon={<WarningCircle />} />
+          <Card iconc="bg-yellow-200" textc="text-yellow-500" total={formatCurrency(totalPendapatan)} title="Total Pendapatan Hari Ini" icon={<CurrencyCircleDollar />} />
+          <Card iconc="bg-blue-200" textc="text-blue-500" total={jumlahTransaksi.toString()} title="Jumlah Transaksi Hari Ini" icon={<ShoppingCart />} />
+          <Card iconc="bg-green-200" textc="text-green-500" total={menuTersedia.toString()} title="Jumlah Menu Yang Tersedia" icon={<ListChecks />} />
+          <Card iconc="bg-red-200" textc="text-red-500" total={menuHabis.toString()} title="Jumlah Menu Yang Habis" icon={<WarningCircle />} />
         </div>
         <div className="grid grid-cols-5 gap-6">
           <div className="col-span-3">
@@ -67,20 +103,30 @@ const Dashboard = () => {
           </div>
           <div className="col-span-2 bg-white p-6 rounded-lg shadow-lg">
             <TitlePage title="Menu Terlaris" />
-            <table className="w-full text-left">
-              <tbody>
-                <tr className="flex items-center justify-between gap-4 p-2 border-b-2 border-gray-100">
-                  <td>
-                    <div className="bg-gray-200 w-16 h-16 rounded-lg"></div>
-                  </td>
-                  <td className="flex flex-col justify-center flex-1">
-                    <span className="text-sm text-gray-500">Makanan</span>
-                    <h1 className="font-semibold">Chicken Paha Atas</h1>
-                  </td>
-                  <td className="text-right italic">{formatCurrency(100000)}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="grid grid-cols-1 gap-4">
+              {topProducts.slice(0, 5).map((product, index) => (
+                <div key={index} className="flex items-center gap-4 p-2 border-b-2 border-gray-100">
+                  <div className="bg-gray-200 w-20 h-16 rounded-lg overflow-hidden">
+                    <Image
+                      src={typeof product.gambar === "string" ? product.gambar : "/placeholder.png"}
+                      alt={product.nama || "Product Image"}
+                      width={1000}
+                      height={1000}
+                      quality={100}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center flex-1">
+                    <span className="text-sm text-gray-500">{product.kategori}</span>
+                    <h1 className="font-semibold">{product.nama}</h1>
+                  </div>
+                  <div className="text-right">
+                    <p className="italic">{formatCurrency(product.harga)}</p>
+                    <p className="text-sm text-gray-500">{product.totalQty} Terjual</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="col-span-5 bg-white p-6 rounded-lg">
             <TitlePage title="Aktivitas Transaksi Terbaru" />
@@ -121,7 +167,6 @@ const Dashboard = () => {
       </div>
     </>
   );
-}
-
+};
 
 export default Dashboard;
