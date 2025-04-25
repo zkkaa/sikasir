@@ -19,6 +19,10 @@ interface Transaction {
 interface Product {
   id: number;
   stok: number;
+  nama?: string;
+  harga?: number;
+  kategori?: string;
+  gambar?: string;
 }
 
 interface TopProduct {
@@ -42,7 +46,7 @@ const formatDateTime = (dateTime: string) => {
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // Pastikan default value sesuai dengan tipe Product[]
   const [totalPendapatan, setTotalPendapatan] = useState(0);
   const [jumlahTransaksi, setJumlahTransaksi] = useState(0);
   const [menuTersedia, setMenuTersedia] = useState(0);
@@ -65,12 +69,7 @@ const Dashboard = () => {
   const fetchProducts = async () => {
     const response = await fetch("/api/produk", { method: "GET" });
     const data = await response.json();
-    const available = data.data.filter((product: Product) => product.stok > 0).length;
-    const outOfStock = data.data.filter((product: Product) => product.stok === 0).length;
-
-    setProducts(data.data);
-    setMenuTersedia(available);
-    setMenuHabis(outOfStock);
+    setProducts(data.data || []); // Perbarui state 'products'
   };
 
   // Fetch top products
@@ -85,6 +84,15 @@ const Dashboard = () => {
     fetchProducts();
     fetchTopProducts();
   }, []);
+
+  useEffect(() => {
+    // Hitung ulang menu tersedia dan menu habis berdasarkan data produk
+    const available = products.filter((product) => product.stok > 0).length;
+    const outOfStock = products.filter((product) => product.stok === 0).length;
+
+    setMenuTersedia(available);
+    setMenuHabis(outOfStock);
+  }, [products]); // Jalankan setiap kali 'products' berubah
 
   return (
     <>
