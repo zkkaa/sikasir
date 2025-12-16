@@ -1,15 +1,11 @@
 import 'dotenv/config';
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "./schema"; // Akan kita buat di langkah berikutnya
+import * as schema from "./schema"; 
 
-// Ambil konfigurasi database dari .env
-import dotenv from "dotenv";
-dotenv.config();
-
-// Buat koneksi ke database PostgreSQL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Sesuaikan dengan .env
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 export const db = drizzle(pool, { schema });

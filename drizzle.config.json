@@ -1,9 +1,0 @@
-{
-    "schema": "./src/db/schema.ts",
-    "out": "./drizzle/migrations",
-    "dialect": "postgresql",
-    "dbCredentials": {
-      "url": "postgres://postgres:kasir@localhost:5432/kasir_db"
-    }
-  }
-  
